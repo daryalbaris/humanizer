@@ -1,0 +1,41 @@
+# AI Humanizer System - Python Dependencies
+# Version: 1.0
+# Python: 3.9, 3.10, 3.11 compatible
+# Last updated: 2025-10-30
+
+# Core NLP Libraries
+spacy==3.7.2
+en-core-web-trf @ https://github.com/explosion/spacy-models/releases/download/en_core_web_trf-3.7.3/en_core_web_trf-3.7.3-py3-none-any.whl
+
+# Transformers and Deep Learning
+transformers==4.35.0
+torch==2.1.0
+bert-score==0.3.13
+
+# Text Processing
+nltk==3.8.1
+
+# Configuration and I/O
+pyyaml==6.0.1
+
+# Testing and Quality
+pytest==7.4.3
+pytest-cov==4.1.0
+flake8==6.1.0
+black==23.11.0
+
+# Utilities
+python-dotenv==1.0.0
+tqdm==4.66.1
+
+# Optional: Type checking (recommended)
+mypy==1.7.1
+
+# Optional: Pre-commit hooks
+pre-commit==3.5.0
+
+# Note: After installation, download spaCy transformer model:
+# python -m spacy download en_core_web_trf
+#
+# For GPU acceleration (optional):
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118

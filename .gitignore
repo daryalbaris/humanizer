@@ -1,0 +1,212 @@
+# AI Humanizer System - Git Ignore File
+# Version: 1.0
+
+# ============================================================
+# Python
+# ============================================================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# ============================================================
+# IDEs and Editors
+# ============================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# PyCharm
+.idea/
+*.iml
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# ============================================================
+# Project-Specific
+# ============================================================
+
+# Humanizer runtime files
+.humanizer/checkpoints/*
+.humanizer/logs/*
+.humanizer/output/*
+
+# Keep directory structure but ignore contents
+!.humanizer/checkpoints/.gitkeep
+!.humanizer/logs/.gitkeep
+!.humanizer/output/.gitkeep
+
+# Data backups and temporary files
+data/*.bak
+data/temp/
+data/*.tmp
+
+# Configuration secrets
+config/.env
+.env
+
+# ============================================================
+# ML Models (too large for git)
+# ============================================================
+models/
+*.pkl
+*.h5
+*.ckpt
+*.pt
+*.pth
+*.bin
+*.onnx
+
+# Model cache directories
+.cache/
+.huggingface/
+transformers_cache/
+
+# ============================================================
+# Logs and Databases
+# ============================================================
+*.log
+*.sql
+*.sqlite
+*.db
+
+# ============================================================
+# OS-Specific
+# ============================================================
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ============================================================
+# Documentation Build
+# ============================================================
+docs/_build/
+docs/_static/
+docs/_templates/
+site/
+
+# Sphinx
+docs/_build/
+docs/_static/
+docs/_templates/
+
+# MkDocs
+site/
+
+# ============================================================
+# Jupyter Notebooks
+# ============================================================
+.ipynb_checkpoints/
+*.ipynb
+
+# ============================================================
+# Miscellaneous
+# ============================================================
+
+# Compressed files
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Editor backups
+*~
+*.bak
+*.orig
+
+# ============================================================
+# Docker (if used)
+# ============================================================
+*.dockerignore
+docker-compose.override.yml
+
+# ============================================================
+# CI/CD
+# ============================================================
+.github/workflows/*.backup
+.gitlab-ci.local.yml
+
+# ============================================================
+# Keep These Placeholder Files
+# ============================================================
+!.gitkeep
+!.keep

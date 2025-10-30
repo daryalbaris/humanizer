@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:originality.ai)",
+      "WebFetch(domain:www.pangram.com)",
+      "WebFetch(domain:arxiv.org)",
+      "WebFetch(domain:www.mdpi.com)",
+      "WebFetch(domain:link.springer.com)",
+      "WebFetch(domain:www.nature.com)",
+      "Bash(python scripts/verify_sandbox.py:*)",
+      "Bash(python:*)",
+      "Bash(git init:*)",
+      "Bash(git config:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

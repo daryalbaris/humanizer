@@ -1,0 +1,175 @@
+# AI Humanizer System - Continuous Integration Pipeline
+# Runs on: Push to any branch, Pull Requests to main/develop
+
+name: CI
+
+on:
+  push:
+    branches: ['**']  # All branches
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint-and-format:
+    name: Lint and Format Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install linting dependencies
+        run: |
+          pip install flake8 black
+
+      - name: Run flake8
+        run: |
+          flake8 src/ --count --max-line-length=120 \
+            --statistics \
+            --exclude=venv,__pycache__,.git \
+            --ignore=E203,W503
+        continue-on-error: false
+
+      - name: Check formatting with black
+        run: |
+          black --check src/ --line-length=120
+        continue-on-error: false
+
+  type-check:
+    name: Type Check (Optional)
+    runs-on: ubuntu-latest
+    continue-on-error: true  # Don't fail build if type check fails
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install mypy
+
+      - name: Run mypy
+        run: |
+          mypy src/ --ignore-missing-imports
+        continue-on-error: true
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Download spaCy model
+        run: |
+          python -m spacy download en_core_web_sm
+        # Use small model for CI (faster, 13 MB vs 500 MB)
+
+      - name: Run pytest
+        run: |
+          pytest tests/ \
+            --verbose \
+            --cov=src \
+            --cov-report=xml \
+            --cov-report=html \
+            --cov-report=term \
+            --cov-fail-under=75
+        continue-on-error: false
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        if: matrix.python-version == '3.10'
+        with:
+          name: coverage-report
+          path: htmlcov/
+          retention-days: 30
+
+      - name: Upload coverage to Codecov (optional)
+        uses: codecov/codecov-action@v3
+        if: matrix.python-version == '3.10'
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
+          verbose: true
+
+  security-check:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install safety bandit
+
+      - name: Run safety check (dependencies)
+        run: |
+          safety check --json || true
+        continue-on-error: true
+
+      - name: Run bandit (code security)
+        run: |
+          bandit -r src/ -f json || true
+        continue-on-error: true
+
+  build-summary:
+    name: Build Summary
+    runs-on: ubuntu-latest
+    needs: [lint-and-format, type-check, test, security-check]
+    if: always()
+
+    steps:
+      - name: Check build status
+        run: |
+          echo "=================================="
+          echo "Build Summary"
+          echo "=================================="
+          echo "Lint & Format: ${{ needs.lint-and-format.result }}"
+          echo "Type Check: ${{ needs.type-check.result }}"
+          echo "Tests: ${{ needs.test.result }}"
+          echo "Security: ${{ needs.security-check.result }}"
+          echo "=================================="
+
+          if [ "${{ needs.lint-and-format.result }}" != "success" ] || \
+             [ "${{ needs.test.result }}" != "success" ]; then
+            echo "Build FAILED - fix issues before merging"
+            exit 1
+          else
+            echo "Build PASSED - ready to merge"
+          fi
