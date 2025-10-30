@@ -202,6 +202,62 @@ class Validator:
             'missing_terms': missing_terms
         }
 
+    def assess_quality(
+        self,
+        metrics: Dict[str, float],
+        bertscore_threshold: float = 0.92,
+        bleu_threshold: float = 0.40,
+        term_threshold: float = 0.95
+    ) -> Dict[str, str]:
+        """
+        Assess overall quality of humanization based on metrics.
+
+        Args:
+            metrics: Dictionary with bertscore_f1, bleu_score, term_preservation_rate
+            bertscore_threshold: Minimum BERTScore F1 threshold
+            bleu_threshold: Minimum BLEU score threshold
+            term_threshold: Minimum term preservation rate threshold
+
+        Returns:
+            Dictionary with overall_quality and individual status checks:
+            {
+                "overall_quality": "excellent" | "good" | "acceptable" | "poor",
+                "bertscore_status": "pass" | "fail",
+                "bleu_status": "pass" | "fail",
+                "term_preservation_status": "pass" | "fail"
+            }
+        """
+        bertscore = metrics.get("bertscore_f1", 0.0)
+        bleu = metrics.get("bleu_score", 0.0)
+        term_pres = metrics.get("term_preservation_rate", 0.0)
+
+        # Check if each metric passes threshold
+        bertscore_passes = bertscore >= bertscore_threshold
+        bleu_passes = bleu >= bleu_threshold
+        term_pres_passes = term_pres >= term_threshold
+
+        # Calculate how much each metric exceeds threshold
+        bertscore_margin = (bertscore - bertscore_threshold) / bertscore_threshold if bertscore_threshold > 0 else 0
+        bleu_margin = (bleu - bleu_threshold) / bleu_threshold if bleu_threshold > 0 else 0
+        term_pres_margin = (term_pres - term_threshold) / term_threshold if term_threshold > 0 else 0
+
+        # Determine overall quality
+        if not (bertscore_passes and bleu_passes and term_pres_passes):
+            overall = "poor"
+        elif bertscore_margin > 0.05 and bleu_margin > 0.05 and term_pres_margin > 0.05:
+            overall = "excellent"  # All exceed by >5%
+        elif bertscore_margin >= 0.02 and bleu_margin >= 0.02 and term_pres_margin >= 0.02:
+            overall = "good"  # All exceed by 2-5%
+        else:
+            overall = "acceptable"  # Meet threshold exactly
+
+        return {
+            "overall_quality": overall,
+            "bertscore_status": "pass" if bertscore_passes else "fail",
+            "bleu_status": "pass" if bleu_passes else "fail",
+            "term_preservation_status": "pass" if term_pres_passes else "fail"
+        }
+
     def assess_overall_quality(
         self,
         bertscore_f1: float,

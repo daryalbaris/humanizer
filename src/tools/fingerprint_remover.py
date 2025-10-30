@@ -68,34 +68,35 @@ class FingerprintRemover:
         self.start_time = time.time()
 
         # AI filler phrase patterns (15+ patterns)
+        # Using (?i) flag for case-insensitivity instead of character classes
         self.filler_phrases = {
             # Academic hedging overused by AI
-            r'\b[Ii]t is important to note that\b': '',
-            r'\b[Ii]t(?:\'s| is) worth noting that\b': '',
-            r'\b[Ii]t should be noted that\b': '',
-            r'\b[Ii]t is worth mentioning that\b': '',
-            r'\b[Ii]t is interesting to note that\b': '',
+            r'(?i)\bit is important to note that\b': '',
+            r'(?i)\bit(?:\'s| is) worth noting that\b': '',
+            r'(?i)\bit should be noted that\b': '',
+            r'(?i)\bit is worth mentioning that\b': '',
+            r'(?i)\bit is interesting to note that\b': '',
 
             # Transition overuse
-            r'\b[Mm]oreover\b(?:,)?': '',  # Remove standalone "Moreover,"
-            r'\b[Ff]urthermore\b(?:,)?': '',
-            r'\b[Aa]dditionally\b(?:,)?': '',
-            r'\b[Ii]n addition to this\b(?:,)?': '',
+            r'(?i)\bmoreover\b(?:,)?': '',  # Remove standalone "Moreover,"
+            r'(?i)\bfurthermore\b(?:,)?': '',
+            r'(?i)\badditionally\b(?:,)?': '',
+            r'(?i)\bin addition to this\b(?:,)?': '',
 
             # Meta-commentary (AI explaining itself)
-            r'\b[Aa]s mentioned (?:previously|earlier|above)\b(?:,)?': '',
-            r'\b[Aa]s discussed (?:previously|earlier|above)\b(?:,)?': '',
-            r'\b[Aa]s we have seen\b(?:,)?': '',
+            r'(?i)\bas mentioned (?:previously|earlier|above)\b(?:,)?': '',
+            r'(?i)\bas discussed (?:previously|earlier|above)\b(?:,)?': '',
+            r'(?i)\bas we have seen\b(?:,)?': '',
 
             # Redundant qualifiers
-            r'\b[Ii]n essence\b(?:,)?': '',
-            r'\b[Bb]asically\b(?:,)?': '',
-            r'\b[Ee]ssentially\b(?:,)?': '',
+            r'(?i)\bin essence\b(?:,)?': '',
+            r'(?i)\bbasically\b(?:,)?': '',
+            r'(?i)\bessentially\b(?:,)?': '',
 
             # Overly formal starts (AI default patterns)
-            r'^[Ii]t is evident that\b': '',
-            r'^[Ii]t can be seen that\b': '',
-            r'^[Ii]t is clear that\b': '',
+            r'(?i)^it is evident that\b': '',
+            r'(?i)^it can be seen that\b': '',
+            r'(?i)^it is clear that\b': '',
         }
 
         # Hedging words (remove if excessive)
@@ -223,18 +224,30 @@ class FingerprintRemover:
         cleaned = text
 
         for pattern, replacement in self.filler_phrases.items():
-            matches = list(re.finditer(pattern, cleaned, re.IGNORECASE))
-            for match in matches:
-                original = match.group(0)
+            # Collect all matches before processing
+            matches = list(re.finditer(pattern, cleaned))
 
-                # Conservative: only remove most obvious patterns
-                if aggressiveness == "conservative":
-                    if "important to note" not in original.lower() and \
-                       "worth noting" not in original.lower():
-                        continue
+            # Filter based on aggressiveness
+            if aggressiveness == "conservative":
+                # Only keep most obvious patterns
+                matches = [m for m in matches if
+                          "important to note" in m.group(0).lower() or
+                          "worth noting" in m.group(0).lower()]
+
+            # Work backwards through matches to preserve positions
+            for match in reversed(matches):
+                original = match.group(0)
+                start = match.start()
+                end = match.end()
+
+                # Clean up extra space after removal
+                if end < len(cleaned) and cleaned[end] == ' ':
+                    end += 1  # Remove trailing space
+                elif start > 0 and cleaned[start-1] == ' ':
+                    start -= 1  # Remove leading space
 
                 # Replace and track
-                cleaned = cleaned[:match.start()] + replacement + cleaned[match.end():]
+                cleaned = cleaned[:start] + replacement + cleaned[end:]
                 removals.append({
                     "type": "filler_phrase",
                     "original": original,
@@ -281,21 +294,49 @@ class FingerprintRemover:
         hedge_ratio = hedge_count / len(words) if words else 0
 
         # If excessive hedging, remove some
+        # Use ceiling for more sensitive/aggressive removal calculation
         if hedge_ratio > hedge_threshold:
-            removals_needed = int((hedge_ratio - hedge_threshold) * len(words))
+            import math
+            excess_ratio = hedge_ratio - hedge_threshold
+
+            # Results section should be more aggressive in hedge removal
+            if section_type == "results":
+                excess_ratio *= 1.2  # 20% boost for results section
+            else:
+                # Non-results sections: reduce removals to preserve some hedging
+                excess_ratio *= 0.5  # 50% reduction for introduction/discussion/etc.
+
+            removals_needed = math.ceil(excess_ratio * len(words))
 
             for hedge_word in self.hedging_words:
                 if removals_needed <= 0:
                     break
 
-                # Find all occurrences
+                # Find all occurrences (work backwards to preserve positions)
                 pattern = r'\b' + re.escape(hedge_word) + r'\b'
                 matches = list(re.finditer(pattern, cleaned, re.IGNORECASE))
 
-                # Remove some instances (not all)
-                for match in matches[:min(len(matches) // 2, removals_needed)]:
+                # Remove some instances (not all) - work backwards through matches
+                # Results section: remove all matches if needed, other sections: remove half + 1
+                if section_type == "results":
+                    num_to_remove = min(len(matches), removals_needed)
+                else:
+                    num_to_remove = min(len(matches) // 2 + 1, len(matches), removals_needed)
+                for match in reversed(matches[-num_to_remove:]):
                     original = match.group(0)
-                    cleaned = cleaned[:match.start()] + cleaned[match.end():]
+                    # Remove with surrounding space if present
+                    start = match.start()
+                    end = match.end()
+
+                    # Clean up extra space after removal
+                    if start > 0 and cleaned[start-1] == ' ' and end < len(cleaned) and cleaned[end] == ' ':
+                        start -= 1  # Remove leading space
+                    elif end < len(cleaned) and cleaned[end] == ' ':
+                        end += 1  # Remove trailing space
+                    elif start > 0 and cleaned[start-1] == ' ':
+                        start -= 1  # Remove leading space
+
+                    cleaned = cleaned[:start] + cleaned[end:]
                     removals.append({
                         "type": "hedging",
                         "original": original,
@@ -303,6 +344,9 @@ class FingerprintRemover:
                         "position": match.start()
                     })
                     removals_needed -= 1
+
+                    if removals_needed <= 0:
+                        break
 
         return cleaned, removals
 
@@ -316,12 +360,15 @@ class FingerprintRemover:
         cleaned = text
 
         for pattern, replacement in self.punctuation_patterns.items():
+            # First collect all matches before replacement
             matches = list(re.finditer(pattern, cleaned))
+
+            # Use re.sub for proper replacement (handles position shifts)
+            cleaned = re.sub(pattern, replacement, cleaned)
+
+            # Track removals
             for match in matches:
                 original = match.group(0)
-
-                # Apply fix
-                cleaned = cleaned[:match.start()] + replacement + cleaned[match.end():]
                 removals.append({
                     "type": "punctuation_tell",
                     "original": original,
@@ -433,8 +480,8 @@ def process_input(input_data: Dict[str, Any]) -> Dict[str, Any]:
         # Process
         result = remover.remove_fingerprints(text, section_type, aggressiveness)
 
-        # Calculate processing time
-        processing_time_ms = int((time.time() - start_time) * 1000)
+        # Calculate processing time (ensure at least 1ms to avoid 0)
+        processing_time_ms = max(1, int((time.time() - start_time) * 1000))
 
         # Return success response
         return {
