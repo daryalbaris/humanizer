@@ -298,6 +298,89 @@ class Validator:
         else:
             return 'acceptable'
 
+    def validate(
+        self,
+        original_text: str,
+        humanized_text: str,
+        placeholder_map: Optional[Dict[str, str]] = None,
+        thresholds: Optional[Dict[str, float]] = None
+    ) -> Dict[str, any]:
+        """
+        High-level validation combining all metrics.
+
+        This is a convenience wrapper that combines semantic similarity (BERTScore),
+        lexical similarity (BLEU), and term preservation checks into a single call.
+
+        Args:
+            original_text: Original text
+            humanized_text: Humanized text
+            placeholder_map: Optional map of placeholders to original terms
+            thresholds: Optional validation thresholds (uses defaults if not provided)
+
+        Returns:
+            Dictionary with comprehensive validation results:
+            {
+                'bertscore': {'precision': float, 'recall': float, 'f1': float},
+                'bleu_score': float,
+                'term_preservation': {...} or None,
+                'quality_assessment': {
+                    'overall_quality': str,
+                    'bertscore_status': str,
+                    'bleu_status': str,
+                    'term_preservation_status': str
+                }
+            }
+
+        Raises:
+            ValueError: If original_text or humanized_text is empty
+        """
+        # Validate inputs
+        if not original_text or not original_text.strip():
+            raise ValueError("original_text cannot be empty")
+        if not humanized_text or not humanized_text.strip():
+            raise ValueError("humanized_text cannot be empty")
+
+        # Use default thresholds if not provided
+        if thresholds is None:
+            thresholds = {
+                'min_bertscore': 0.92,
+                'min_bleu': 0.40,
+                'min_term_preservation': 0.95
+            }
+
+        # Calculate BERTScore
+        bertscore_result = self.calculate_bertscore(original_text, humanized_text)
+
+        # Calculate BLEU score
+        bleu_score = self.calculate_bleu(original_text, humanized_text)
+
+        # Check term preservation (if placeholder_map provided)
+        term_preservation_result = None
+        term_preservation_rate = 1.0
+        if placeholder_map:
+            term_preservation_result = self.check_term_preservation(humanized_text, placeholder_map)
+            term_preservation_rate = term_preservation_result['preservation_rate']
+
+        # Assess quality using the assess_quality method
+        quality_metrics = {
+            'bertscore_f1': bertscore_result['f1'],
+            'bleu_score': bleu_score,
+            'term_preservation_rate': term_preservation_rate
+        }
+        quality_assessment = self.assess_quality(
+            metrics=quality_metrics,
+            bertscore_threshold=thresholds['min_bertscore'],
+            bleu_threshold=thresholds['min_bleu'],
+            term_threshold=thresholds['min_term_preservation']
+        )
+
+        return {
+            'bertscore': bertscore_result,
+            'bleu_score': bleu_score,
+            'term_preservation': term_preservation_result,
+            'quality_assessment': quality_assessment
+        }
+
 
 def process_input(input_data: Dict[str, any]) -> Dict[str, any]:
     """
@@ -330,7 +413,7 @@ def process_input(input_data: Dict[str, any]) -> Dict[str, any]:
                 'status': 'error',
                 'error': {
                     'code': 'VALIDATION_ERROR',
-                    'message': 'Original text cannot be empty'
+                    'message': 'original_text cannot be empty'
                 }
             }
 
@@ -339,81 +422,28 @@ def process_input(input_data: Dict[str, any]) -> Dict[str, any]:
                 'status': 'error',
                 'error': {
                     'code': 'VALIDATION_ERROR',
-                    'message': 'Humanized text cannot be empty'
+                    'message': 'humanized_text cannot be empty'
                 }
             }
 
         # Initialize validator
         validator = Validator()
 
-        # Semantic similarity check
-        semantic_result = {}
-        if check_semantic_similarity_flag:
-            bertscore_result = validator.calculate_bertscore(original_text, humanized_text)
-            bleu_result = validator.calculate_bleu(original_text, humanized_text)
-
-            semantic_result = {
-                'bertscore_f1': bertscore_result['f1'],
-                'bertscore_precision': bertscore_result['precision'],
-                'bertscore_recall': bertscore_result['recall'],
-                'passes_threshold': bertscore_result['f1'] >= thresholds['min_bertscore']
-            }
-
-            lexical_result = {
-                'bleu_score': bleu_result,
-                'passes_threshold': bleu_result >= thresholds['min_bleu']
-            }
-        else:
-            semantic_result = {'skipped': True}
-            lexical_result = {'skipped': True}
-            bertscore_result = {'f1': 1.0}
-            bleu_result = 1.0
-
-        # Term preservation check
-        term_result = {}
-        if check_term_preservation_flag and placeholder_map:
-            term_check = validator.check_term_preservation(humanized_text, placeholder_map)
-            term_result = {
-                'terms_expected': term_check['terms_expected'],
-                'terms_found': term_check['terms_found'],
-                'preservation_rate': term_check['preservation_rate'],
-                'passes_threshold': term_check['preservation_rate'] >= thresholds['min_term_preservation'],
-                'missing_terms': term_check['missing_terms']
-            }
-            preservation_rate = term_check['preservation_rate']
-        else:
-            term_result = {'skipped': True}
-            preservation_rate = 1.0
-
-        # Overall quality assessment
-        overall_quality = validator.assess_overall_quality(
-            bertscore_f1=bertscore_result.get('f1', 1.0) if check_semantic_similarity_flag else 1.0,
-            bleu_score=bleu_result if check_semantic_similarity_flag else 1.0,
-            term_preservation_rate=preservation_rate,
+        # Use the validate() method for the core validation logic
+        validation_result = validator.validate(
+            original_text=original_text,
+            humanized_text=humanized_text,
+            placeholder_map=placeholder_map if (check_term_preservation_flag and placeholder_map) else None,
             thresholds=thresholds
         )
-
-        # Determine if valid
-        valid = True
-        if check_semantic_similarity_flag:
-            valid = valid and semantic_result.get('passes_threshold', True)
-            valid = valid and lexical_result.get('passes_threshold', True)
-        if check_term_preservation_flag and placeholder_map:
-            valid = valid and term_result.get('passes_threshold', True)
 
         # Calculate processing time
         processing_time = int((time.time() - start_time) * 1000)
 
-        # Build response
+        # Build response using validation_result
         return {
             'status': 'success',
-            'data': {
-                'valid': valid,
-                'semantic_similarity': semantic_result,
-                'lexical_similarity': lexical_result,
-                'term_preservation': term_result,
-                'overall_quality': overall_quality
-            },
+            'data': validation_result,
             'metadata': {
                 'processing_time_ms': processing_time,
                 'tool': 'validator',
