@@ -64,14 +64,10 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from utils.logger import HumanizerLogger
+from utils.logger import get_logger
 
 # Initialize logger (file output only, no console for clean JSON)
-logger = HumanizerLogger(
-    name="burstiness_enhancer",
-    log_file="logs/burstiness_enhancer.log",
-    console_output=False
-)
+logger = get_logger(__name__)
 
 
 class BurstinessEnhancer:
@@ -143,7 +139,7 @@ class BurstinessEnhancer:
             ]
         }
 
-        logger.info("BurstinessEnhancer initialized (Dimensions 1-3)", extra={
+        logger.info("BurstinessEnhancer initialized (Dimensions 1-3)", data={
             "dimensions_available": [1, 2, 3],
             "section_targets": len(self.sentence_length_targets),
             "seed": seed
@@ -171,7 +167,7 @@ class BurstinessEnhancer:
         Returns:
             Dictionary with enhanced text and statistics
         """
-        logger.info(f"Starting burstiness enhancement", extra={
+        logger.info(f"Starting burstiness enhancement", data={
             "text_length": len(text),
             "section_type": section_type,
             "dimensions": dimensions,
@@ -250,7 +246,7 @@ class BurstinessEnhancer:
 
         stats["modified_sentence_count"] = len(enhanced_sentences)
 
-        logger.info(f"Burstiness enhancement complete", extra={
+        logger.info(f"Burstiness enhancement complete", data={
             "total_enhancements": len(enhancements),
             "dimension_1": stats["dimension_1_changes"],
             "dimension_2": stats["dimension_2_changes"],
@@ -578,7 +574,7 @@ def process_input(input_data: Dict[str, Any]) -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Burstiness enhancement failed", extra={
+        logger.error(f"Burstiness enhancement failed", data={
             "error": str(e),
             "error_type": type(e).__name__
         })

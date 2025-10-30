@@ -46,14 +46,10 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from utils.logger import HumanizerLogger
+from utils.logger import get_logger
 
 # Initialize logger (file output only, no console for clean JSON)
-logger = HumanizerLogger(
-    name="fingerprint_remover",
-    log_file="logs/fingerprint_remover.log",
-    console_output=False
-)
+logger = get_logger(__name__)
 
 
 class FingerprintRemover:
@@ -128,7 +124,7 @@ class FingerprintRemover:
             r'^This\s+': '',  # Remove "This" at start of consecutive sentences
         }
 
-        logger.info("FingerprintRemover initialized", extra={
+        logger.info("FingerprintRemover initialized", data={
             "filler_patterns": len(self.filler_phrases),
             "hedging_words": len(self.hedging_words),
             "punctuation_patterns": len(self.punctuation_patterns)
@@ -154,7 +150,7 @@ class FingerprintRemover:
         Returns:
             Dictionary with cleaned text and removal statistics
         """
-        logger.info(f"Starting fingerprint removal", extra={
+        logger.info(f"Starting fingerprint removal", data={
             "text_length": len(text),
             "section_type": section_type,
             "aggressiveness": aggressiveness
@@ -203,7 +199,7 @@ class FingerprintRemover:
 
         stats["total_removals"] = len(removals)
 
-        logger.info(f"Fingerprint removal complete", extra={
+        logger.info(f"Fingerprint removal complete", data={
             "total_removals": stats["total_removals"],
             "filler_phrases": stats["filler_phrases"],
             "hedging_words": stats["hedging_words"],
@@ -456,7 +452,7 @@ def process_input(input_data: Dict[str, Any]) -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Fingerprint removal failed", extra={
+        logger.error(f"Fingerprint removal failed", data={
             "error": str(e),
             "error_type": type(e).__name__
         })

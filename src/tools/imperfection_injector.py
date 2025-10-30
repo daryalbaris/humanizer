@@ -49,14 +49,10 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from utils.logger import HumanizerLogger
+from utils.logger import get_logger
 
 # Initialize logger (file output only, no console for clean JSON)
-logger = HumanizerLogger(
-    name="imperfection_injector",
-    log_file="logs/imperfection_injector.log",
-    console_output=False
-)
+logger = get_logger(__name__)
 
 
 class ImperfectionInjector:
@@ -117,7 +113,7 @@ class ImperfectionInjector:
             "minor_passive"        # Occasional passive voice in active sections
         ]
 
-        logger.info("ImperfectionInjector initialized", extra={
+        logger.info("ImperfectionInjector initialized", data={
             "hesitation_categories": len(self.hesitations),
             "filler_categories": len(self.fillers),
             "seed": seed
@@ -143,7 +139,7 @@ class ImperfectionInjector:
         Returns:
             Dictionary with imperfection-injected text and statistics
         """
-        logger.info(f"Starting imperfection injection", extra={
+        logger.info(f"Starting imperfection injection", data={
             "text_length": len(text),
             "section_type": section_type,
             "intensity": intensity
@@ -218,7 +214,7 @@ class ImperfectionInjector:
 
         stats["total_injections"] = len(injections)
 
-        logger.info(f"Imperfection injection complete", extra={
+        logger.info(f"Imperfection injection complete", data={
             "total_injections": stats["total_injections"],
             "hesitations": stats["hesitations"],
             "fillers": stats["fillers"],
@@ -441,7 +437,7 @@ def process_input(input_data: Dict[str, Any]) -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Imperfection injection failed", extra={
+        logger.error(f"Imperfection injection failed", data={
             "error": str(e),
             "error_type": type(e).__name__
         })

@@ -57,14 +57,10 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from utils.logger import HumanizerLogger
+from utils.logger import get_logger
 
 # Initialize logger (file output only, no console for clean JSON)
-logger = HumanizerLogger(
-    name="reference_analyzer",
-    log_file="logs/reference_analyzer.log",
-    console_output=False
-)
+logger = get_logger(__name__)
 
 
 class ReferenceAnalyzer:
@@ -108,7 +104,7 @@ class ReferenceAnalyzer:
             "conclusion": r'(?:^|\n)(?:5\.?\s*)?(?:conclusions?|summary)\b'
         }
 
-        logger.info("ReferenceAnalyzer initialized", extra={
+        logger.info("ReferenceAnalyzer initialized", data={
             "transition_categories": len(self.common_transitions),
             "vocabulary_tiers": len(self.vocabulary_tiers)
         })
@@ -131,7 +127,7 @@ class ReferenceAnalyzer:
         Returns:
             Dictionary with style profile and recommendations
         """
-        logger.info(f"Starting reference analysis", extra={
+        logger.info(f"Starting reference analysis", data={
             "num_references": len(reference_texts),
             "analysis_depth": analysis_depth
         })
@@ -143,7 +139,7 @@ class ReferenceAnalyzer:
         validation_results = self._validate_references(reference_texts)
 
         if not validation_results["valid"]:
-            logger.warning("Reference validation failed", extra=validation_results)
+            logger.warning("Reference validation failed", data=validation_results)
 
         # Combine all reference texts
         combined_text = "\n\n".join([ref["text"] for ref in reference_texts])
@@ -180,7 +176,7 @@ class ReferenceAnalyzer:
         # Generate recommendations
         recommendations = self._generate_recommendations(style_profile, analysis_depth)
 
-        logger.info(f"Reference analysis complete", extra={
+        logger.info(f"Reference analysis complete", data={
             "style_features": len(style_profile),
             "recommendations": len(recommendations)
         })
@@ -516,7 +512,7 @@ def process_input(input_data: Dict[str, Any]) -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Reference analysis failed", extra={
+        logger.error(f"Reference analysis failed", data={
             "error": str(e),
             "error_type": type(e).__name__
         })
