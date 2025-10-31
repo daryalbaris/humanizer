@@ -1,0 +1,344 @@
+# BMAD Academic Humanizer - Production Configuration
+
+# Application Settings
+app:
+  name: "BMAD Academic Humanizer"
+  version: "1.0.0"
+  environment: "production"
+  debug: false
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4  # Number of worker processes
+  worker_class: "uvicorn.workers.UvicornWorker"
+  timeout: 300  # Request timeout in seconds
+
+# Logging Configuration
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "json"  # json or text
+  output: "file"  # console, file, or both
+  file_path: "/var/log/bmad/app.log"
+  max_size_mb: 100  # Max log file size
+  backup_count: 10  # Number of backup log files
+  structured: true  # Enable structured logging
+  include_trace_id: true  # Include trace ID in logs
+
+  # Log specific components
+  components:
+    api: "INFO"
+    tools: "INFO"
+    utils: "INFO"
+    performance: "INFO"
+
+# API Configuration
+api:
+  rate_limit:
+    enabled: true
+    requests_per_minute: 100
+    requests_per_hour: 1000
+    burst: 20  # Allow burst of requests
+
+  cors:
+    enabled: true
+    allow_origins:
+      - "https://yourdomain.com"
+      - "https://app.yourdomain.com"
+    allow_methods:
+      - "GET"
+      - "POST"
+      - "OPTIONS"
+    allow_headers:
+      - "Content-Type"
+      - "Authorization"
+      - "X-API-Key"
+    allow_credentials: true
+
+  authentication:
+    enabled: true
+    type: "api_key"  # api_key, jwt, oauth2
+    api_key_header: "X-API-Key"
+    jwt_secret_key: "${JWT_SECRET_KEY}"  # Load from environment
+    jwt_algorithm: "HS256"
+    jwt_expiration_hours: 24
+
+  validation:
+    max_text_length: 100000  # characters
+    min_text_length: 10
+    allowed_content_types:
+      - "application/json"
+      - "text/plain"
+
+# LLM Configuration
+llm:
+  provider: "openai"  # openai, anthropic, cohere
+  model: "gpt-4-turbo"
+  api_key: "${OPENAI_API_KEY}"  # Load from environment
+  base_url: "https://api.openai.com/v1"
+
+  # Retry configuration
+  retry:
+    max_attempts: 3
+    backoff_factor: 2
+    max_backoff_seconds: 60
+
+  # Timeout configuration
+  timeout:
+    connection_seconds: 30
+    read_seconds: 300
+
+  # Rate limiting (LLM API)
+  rate_limit:
+    requests_per_minute: 50
+    tokens_per_minute: 150000
+
+# Cache Configuration
+cache:
+  enabled: true
+  type: "redis"  # redis, memcached, or memory
+
+  # Redis configuration
+  redis:
+    host: "${REDIS_HOST:-localhost}"
+    port: 6379
+    db: 0
+    password: "${REDIS_PASSWORD}"
+    ssl: true
+    max_connections: 50
+    socket_timeout: 5
+    socket_connect_timeout: 5
+
+  # Cache settings
+  default_ttl_seconds: 3600  # 1 hour
+  max_size: 1000  # For memory cache
+
+  # Cache keys by operation
+  ttl_by_operation:
+    fingerprint_removal: 7200  # 2 hours
+    burstiness_enhancement: 7200
+    imperfection_injection: 7200
+    reference_analysis: 14400  # 4 hours
+    perplexity_calculation: 28800  # 8 hours
+    ai_detection: 86400  # 24 hours
+
+# Database Configuration (if needed)
+database:
+  enabled: false  # Enable if using database
+  type: "postgresql"  # postgresql, mysql, sqlite
+
+  # PostgreSQL configuration
+  postgresql:
+    host: "${DATABASE_HOST:-localhost}"
+    port: 5432
+    database: "${DATABASE_NAME}"
+    user: "${DATABASE_USER}"
+    password: "${DATABASE_PASSWORD}"
+    ssl_mode: "require"
+    pool_size: 20
+    max_overflow: 10
+    pool_timeout: 30
+    pool_recycle: 3600  # Recycle connections after 1 hour
+
+# Performance Optimization
+performance:
+  # Caching
+  response_cache:
+    enabled: true
+    max_size: 500
+    ttl_seconds: 3600
+
+  # Parallel processing
+  parallel_execution:
+    enabled: true
+    max_workers: 4
+
+  # Streaming
+  streaming:
+    enabled: true
+    chunk_size: 5000
+    threshold_characters: 50000  # Use streaming above this size
+
+  # Batch processing
+  batch_processing:
+    enabled: true
+    max_batch_size: 10
+    max_wait_ms: 100
+
+# Monitoring & Observability
+monitoring:
+  # Metrics
+  metrics:
+    enabled: true
+    prometheus:
+      enabled: true
+      port: 9090
+      path: "/metrics"
+
+    # Custom metrics
+    track_latency: true
+    track_errors: true
+    track_cache_hits: true
+    track_throughput: true
+
+  # Health checks
+  health_check:
+    enabled: true
+    endpoint: "/health"
+    detailed_endpoint: "/health/detailed"
+    readiness_endpoint: "/ready"
+    liveness_endpoint: "/live"
+
+  # Tracing
+  tracing:
+    enabled: true
+    jaeger:
+      enabled: true
+      agent_host: "${JAEGER_AGENT_HOST:-localhost}"
+      agent_port: 6831
+      sampling_rate: 0.1  # Sample 10% of requests
+
+# Security
+security:
+  # HTTPS
+  https:
+    enabled: true
+    cert_file: "/etc/ssl/certs/bmad.crt"
+    key_file: "/etc/ssl/private/bmad.key"
+
+  # Security headers
+  headers:
+    x_frame_options: "DENY"
+    x_content_type_options: "nosniff"
+    x_xss_protection: "1; mode=block"
+    strict_transport_security: "max-age=31536000; includeSubDomains"
+    content_security_policy: "default-src 'self'"
+
+  # Request validation
+  validation:
+    max_request_size_mb: 10
+    allow_only_json: true
+    validate_content_type: true
+
+# Tools Configuration
+tools:
+  fingerprint_remover:
+    enabled: true
+    default_aggressiveness: "moderate"
+    max_text_length: 100000
+
+  burstiness_enhancer:
+    enabled: true
+    default_target_burstiness: 0.6
+    min_text_length: 50
+
+  imperfection_injector:
+    enabled: true
+    default_level: "subtle"
+    preserve_academic_quality: true
+
+  reference_analyzer:
+    enabled: true
+    supported_styles:
+      - "apa"
+      - "mla"
+      - "chicago"
+      - "harvard"
+      - "ieee"
+
+  detector_processor:
+    enabled: true
+    supported_detectors:
+      - "gptzero"
+      - "originality"
+      - "turnitin"
+    timeout_seconds: 30
+
+  validator:
+    enabled: true
+    min_quality_score: 7.0
+    check_academic_standards: true
+    check_readability: true
+    check_structure: true
+
+  perplexity_calculator:
+    enabled: true
+    default_model: "gpt2"
+    supported_models:
+      - "gpt2"
+      - "gpt2-medium"
+      - "gpt2-large"
+
+# Error Handling
+error_handling:
+  # Retry configuration
+  retry:
+    enabled: true
+    max_attempts: 3
+    backoff_factor: 2
+
+  # Error reporting
+  sentry:
+    enabled: true
+    dsn: "${SENTRY_DSN}"
+    environment: "production"
+    traces_sample_rate: 0.1
+    profiles_sample_rate: 0.1
+
+  # Circuit breaker
+  circuit_breaker:
+    enabled: true
+    failure_threshold: 5
+    recovery_timeout: 60
+    half_open_max_calls: 3
+
+# Feature Flags
+features:
+  paraphrasing: true
+  ai_detection: true
+  advanced_analytics: true
+  batch_processing: true
+  streaming_mode: true
+
+# Deployment
+deployment:
+  graceful_shutdown_timeout: 30  # seconds
+  health_check_interval: 30
+  readiness_delay: 10  # seconds to wait before marking ready
+
+  # Auto-scaling
+  autoscaling:
+    enabled: true
+    min_replicas: 2
+    max_replicas: 10
+    target_cpu_percent: 70
+    target_memory_percent: 80
+
+# Backup & Recovery
+backup:
+  enabled: false  # Enable if using database
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  retention_days: 30
+  storage:
+    type: "s3"  # s3, gcs, azure_blob
+    bucket: "${BACKUP_BUCKET}"
+    region: "${BACKUP_REGION}"
+
+# Maintenance
+maintenance:
+  mode: false  # Set to true to enable maintenance mode
+  message: "System under maintenance. Please try again later."
+  allowed_ips: []  # IPs allowed during maintenance
+
+# Environment Variables Required
+# The following environment variables must be set:
+# - OPENAI_API_KEY: OpenAI API key
+# - JWT_SECRET_KEY: JWT secret for authentication
+# - REDIS_HOST: Redis host (if using Redis cache)
+# - REDIS_PASSWORD: Redis password
+# - DATABASE_HOST: Database host (if using database)
+# - DATABASE_NAME: Database name
+# - DATABASE_USER: Database user
+# - DATABASE_PASSWORD: Database password
+# - SENTRY_DSN: Sentry DSN (if using Sentry)
+# - JAEGER_AGENT_HOST: Jaeger agent host (if using tracing)
+# - BACKUP_BUCKET: S3 bucket for backups (if using backups)
+# - BACKUP_REGION: AWS region for backups

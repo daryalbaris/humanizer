@@ -1,0 +1,969 @@
+openapi: 3.0.3
+info:
+  title: BMAD Academic Humanizer API
+  description: |
+    **BMAD (Burstiness, Memory, Awareness, Detection) Academic Humanizer**
+
+    A comprehensive system for humanizing AI-generated academic text while maintaining academic integrity and quality.
+
+    ## Key Features
+
+    - **Fingerprint Removal**: Remove AI writing patterns and fingerprints
+    - **Burstiness Enhancement**: Add natural variation in sentence structures
+    - **Imperfection Injection**: Add human-like minor imperfections
+    - **Reference Analysis**: Analyze and validate citations
+    - **AI Detection**: Test against AI detection systems
+    - **Validation**: Ensure academic quality standards
+    - **Perplexity Analysis**: Measure text complexity and naturalness
+
+    ## Authentication
+
+    Currently, the API does not require authentication for local/development use.
+    For production deployment, implement API key authentication.
+
+    ## Rate Limits
+
+    - Development: No limits
+    - Production: TBD based on deployment
+
+    ## Base URL
+
+    - Development: `http://localhost:8000`
+    - Production: TBD
+
+  version: 1.0.0
+  contact:
+    name: BMAD Team
+    email: support@bmad-humanizer.example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: http://localhost:8000/api/v1
+    description: Development server with API versioning
+
+tags:
+  - name: Fingerprint Removal
+    description: Remove AI writing patterns and fingerprints
+  - name: Burstiness Enhancement
+    description: Add natural variation in sentence structures
+  - name: Imperfection Injection
+    description: Add human-like minor imperfections
+  - name: Reference Analysis
+    description: Analyze and validate citations
+  - name: Detection
+    description: AI detection and testing
+  - name: Validation
+    description: Quality validation and metrics
+  - name: Analysis
+    description: Text analysis tools
+  - name: Pipeline
+    description: End-to-end processing pipelines
+
+paths:
+  /fingerprint/remove:
+    post:
+      tags:
+        - Fingerprint Removal
+      summary: Remove AI fingerprints from text
+      description: |
+        Removes AI writing patterns including:
+        - Filler phrases ("It is important to note that...")
+        - Excessive hedging language
+        - AI punctuation tells (em dash overuse)
+        - Repetitive sentence structures
+      operationId: removeFingerprin
+
+ts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FingerprintRemovalRequest'
+            examples:
+              basic:
+                summary: Basic fingerprint removal
+                value:
+                  text: "It is important to note that the results may indicate a potentially significant trend. Moreover, it should be noted that this is arguably the most important finding."
+                  aggressiveness: "moderate"
+                  section_type: "results"
+              aggressive:
+                summary: Aggressive removal
+                value:
+                  text: "The methodology might possibly show that results could potentially be significant."
+                  aggressiveness: "aggressive"
+                  section_type: "results"
+      responses:
+        '200':
+          description: Successful fingerprint removal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FingerprintRemovalResponse'
+              examples:
+                success:
+                  value:
+                    status: "success"
+                    data:
+                      cleaned_text: "The results indicate a significant trend. This is the most important finding."
+                      fingerprints_removed:
+                        - type: "filler_phrase"
+                          original: "It is important to note that"
+                          replacement: ""
+                          position: 0
+                        - type: "hedging"
+                          original: "may"
+                          replacement: ""
+                          position: 45
+                      statistics:
+                        total_removals: 5
+                        filler_phrases: 2
+                        hedging_words: 2
+                        punctuation_tells: 1
+                        structure_fixes: 0
+                    metadata:
+                      processing_time_ms: 125
+                      tool: "fingerprint_remover"
+                      version: "1.0"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /burstiness/enhance:
+    post:
+      tags:
+        - Burstiness Enhancement
+      summary: Enhance text burstiness
+      description: |
+        Adds natural variation in sentence length and complexity to mimic human writing patterns.
+
+        Burstiness measures the variation in sentence structures:
+        - High burstiness: Mix of short and long sentences (human-like)
+        - Low burstiness: Uniform sentence length (AI-like)
+      operationId: enhanceBurstiness
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BurstinessEnhancementRequest'
+            examples:
+              target_medium:
+                summary: Target medium burstiness
+                value:
+                  text: "This is a sentence. This is another sentence. This is yet another sentence of similar length."
+                  target_burstiness: 0.6
+                  strategy: "merge_and_split"
+              target_high:
+                summary: Target high burstiness
+                value:
+                  text: "The research methodology employed in this study encompasses a comprehensive analysis of multiple data sources."
+                  target_burstiness: 0.8
+                  strategy: "all"
+      responses:
+        '200':
+          description: Successful burstiness enhancement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BurstinessEnhancementResponse'
+              examples:
+                success:
+                  value:
+                    status: "success"
+                    data:
+                      enhanced_text: "This is a sentence. This is another sentence, but this one provides additional context and detail. Yet another sentence."
+                      original_burstiness: 0.15
+                      enhanced_burstiness: 0.62
+                      transformations_applied:
+                        - type: "sentence_merge"
+                          position: 25
+                          description: "Merged sentences 2 and 3"
+                        - type: "sentence_split"
+                          position: 105
+                          description: "Split long sentence"
+                      statistics:
+                        original_avg_sentence_length: 12.3
+                        enhanced_avg_sentence_length: 15.7
+                        original_sentence_count: 3
+                        enhanced_sentence_count: 3
+                    metadata:
+                      processing_time_ms: 215
+                      tool: "burstiness_enhancer"
+                      version: "1.0"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /imperfection/inject:
+    post:
+      tags:
+        - Imperfection Injection
+      summary: Inject human-like imperfections
+      description: |
+        Adds subtle, human-like imperfections to text including:
+        - Minor grammatical variations
+        - Stylistic inconsistencies
+        - Natural writing quirks
+
+        **Important**: Maintains academic quality while adding naturalness
+      operationId: injectImperfections
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImperfectionInjectionRequest'
+            examples:
+              subtle:
+                summary: Subtle imperfections
+                value:
+                  text: "The research demonstrates significant findings. The methodology is robust."
+                  level: "subtle"
+                  preserve_academic_quality: true
+              moderate:
+                summary: Moderate imperfections
+                value:
+                  text: "The analysis reveals important patterns in the data."
+                  level: "moderate"
+                  preserve_academic_quality: true
+      responses:
+        '200':
+          description: Successful imperfection injection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImperfectionInjectionResponse'
+              examples:
+                success:
+                  value:
+                    status: "success"
+                    data:
+                      modified_text: "The research demonstrates significant findings; the methodology is robust."
+                      imperfections_added:
+                        - type: "punctuation_variation"
+                          position: 52
+                          description: "Changed period to semicolon"
+                        - type: "contraction_expansion"
+                          position: 85
+                          description: "Expanded 'can't' to 'cannot'"
+                      statistics:
+                        total_imperfections: 2
+                        academic_quality_preserved: true
+                    metadata:
+                      processing_time_ms: 95
+                      tool: "imperfection_injector"
+                      version: "1.0"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /reference/analyze:
+    post:
+      tags:
+        - Reference Analysis
+      summary: Analyze references and citations
+      description: |
+        Analyzes references in academic text including:
+        - Citation format validation
+        - Reference completeness check
+        - Cross-reference validation
+        - Citation style detection
+      operationId: analyzeReferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReferenceAnalysisRequest'
+            examples:
+              basic:
+                summary: Basic reference analysis
+                value:
+                  text: "According to Smith et al. (2020), the methodology is sound. Jones (2019) argues differently."
+                  expected_style: "apa"
+      responses:
+        '200':
+          description: Successful reference analysis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferenceAnalysisResponse'
+              examples:
+                success:
+                  value:
+                    status: "success"
+                    data:
+                      citations_found:
+                        - text: "Smith et al. (2020)"
+                          position: 13
+                          style: "apa"
+                          valid: true
+                        - text: "Jones (2019)"
+                          position: 68
+                          style: "apa"
+                          valid: true
+                      statistics:
+                        total_citations: 2
+                        valid_citations: 2
+                        invalid_citations: 0
+                        citation_density: 0.15
+                      style_consistency:
+                        detected_style: "apa"
+                        consistency_score: 1.0
+                    metadata:
+                      processing_time_ms: 180
+                      tool: "reference_analyzer"
+                      version: "1.0"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /detect/ai:
+    post:
+      tags:
+        - Detection
+      summary: Test text against AI detectors
+      description: |
+        Tests text against AI detection systems to evaluate humanization effectiveness.
+
+        **Detectors supported:**
+        - GPTZero
+        - Originality.ai
+        - Turnitin (simulated)
+      operationId: detectAI
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AIDetectionRequest'
+            examples:
+              basic:
+                summary: Basic AI detection
+                value:
+                  text: "The research demonstrates significant findings with robust methodology."
+                  detectors: ["gptzero", "originality"]
+      responses:
+        '200':
+          description: Successful AI detection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIDetectionResponse'
+              examples:
+                success:
+                  value:
+                    status: "success"
+                    data:
+                      overall_ai_score: 0.25
+                      human_probability: 0.75
+                      detector_results:
+                        gptzero:
+                          ai_probability: 0.30
+                          human_probability: 0.70
+                          confidence: 0.85
+                        originality:
+                          ai_probability: 0.20
+                          human_probability: 0.80
+                          confidence: 0.90
+                      recommendation: "Text appears human-written"
+                    metadata:
+                      processing_time_ms: 3500
+                      tool: "detector_processor"
+                      version: "1.0"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /validate:
+    post:
+      tags:
+        - Validation
+      summary: Validate text quality
+      description: |
+        Validates academic text quality across multiple dimensions:
+        - Academic standards compliance
+        - Readability metrics
+        - Structural integrity
+        - Language quality
+      operationId: validateText
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidationRequest'
+            examples:
+              comprehensive:
+                summary: Comprehensive validation
+                value:
+                  text: "The research demonstrates significant findings."
+                  check_academic_standards: true
+                  check_readability: true
+                  check_structure: true
+      responses:
+        '200':
+          description: Successful validation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResponse'
+              examples:
+                success:
+                  value:
+                    status: "success"
+                    data:
+                      overall_score: 8.5
+                      passed: true
+                      checks:
+                        academic_standards:
+                          passed: true
+                          score: 9.0
+                          issues: []
+                        readability:
+                          passed: true
+                          score: 8.5
+                          flesch_reading_ease: 65.5
+                          flesch_kincaid_grade: 10.2
+                        structure:
+                          passed: true
+                          score: 8.0
+                          paragraph_count: 3
+                          avg_paragraph_length: 85
+                      recommendations: []
+                    metadata:
+                      processing_time_ms: 250
+                      tool: "validator"
+                      version: "1.0"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /analyze/perplexity:
+    post:
+      tags:
+        - Analysis
+      summary: Calculate perplexity score
+      description: |
+        Calculates perplexity score using language models.
+
+        Lower perplexity = more predictable (AI-like)
+        Higher perplexity = less predictable (human-like)
+      operationId: calculatePerplexity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PerplexityRequest'
+            examples:
+              basic:
+                summary: Basic perplexity calculation
+                value:
+                  text: "The research demonstrates findings."
+                  model: "gpt2"
+      responses:
+        '200':
+          description: Successful perplexity calculation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerplexityResponse'
+              examples:
+                success:
+                  value:
+                    status: "success"
+                    data:
+                      overall_perplexity: 150.32
+                      section_perplexities: []
+                      perplexity_distribution:
+                        min: 145.5
+                        max: 155.8
+                        mean: 150.32
+                        median: 150.1
+                        std_dev: 3.2
+                    metadata:
+                      processing_time_ms: 1250
+                      tool: "perplexity_calculator"
+                      version: "1.0"
+                      model: "gpt2"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /pipeline/full:
+    post:
+      tags:
+        - Pipeline
+      summary: Run full humanization pipeline
+      description: |
+        Executes the complete humanization pipeline:
+        1. Paraphrase (optional)
+        2. Remove fingerprints
+        3. Enhance burstiness
+        4. Inject imperfections
+        5. Analyze references
+        6. Validate quality
+        7. Test AI detection
+      operationId: runFullPipeline
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FullPipelineRequest'
+            examples:
+              complete:
+                summary: Complete pipeline
+                value:
+                  text: "It is important to note that the research demonstrates findings."
+                  config:
+                    paraphrase: true
+                    fingerprint_removal:
+                      aggressiveness: "moderate"
+                    burstiness_enhancement:
+                      target_burstiness: 0.6
+                    imperfection_injection:
+                      level: "subtle"
+                    run_validation: true
+                    run_detection: true
+      responses:
+        '200':
+          description: Successful pipeline execution
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FullPipelineResponse'
+              examples:
+                success:
+                  value:
+                    status: "success"
+                    data:
+                      final_text: "The research demonstrates significant findings with robust methodology."
+                      pipeline_stages:
+                        - stage: "paraphrase"
+                          success: true
+                          duration_ms: 2500
+                        - stage: "fingerprint_removal"
+                          success: true
+                          duration_ms: 125
+                        - stage: "burstiness_enhancement"
+                          success: true
+                          duration_ms: 215
+                      validation_result:
+                        passed: true
+                        score: 8.5
+                      detection_result:
+                        human_probability: 0.75
+                      improvements:
+                        original_ai_probability: 0.85
+                        final_ai_probability: 0.25
+                        improvement_percentage: 70.6
+                    metadata:
+                      total_processing_time_ms: 8500
+                      tool: "full_pipeline"
+                      version: "1.0"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  schemas:
+    # Request Schemas
+    FingerprintRemovalRequest:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          description: Input text to process
+          minLength: 10
+          maxLength: 100000
+        aggressiveness:
+          type: string
+          enum: [conservative, moderate, aggressive]
+          default: moderate
+          description: How aggressively to remove fingerprints
+        section_type:
+          type: string
+          enum: [introduction, methods, results, discussion, conclusion, general]
+          default: general
+          description: Academic section type for context-aware processing
+
+    BurstinessEnhancementRequest:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          description: Input text to enhance
+          minLength: 50
+          maxLength: 100000
+        target_burstiness:
+          type: number
+          format: float
+          minimum: 0.3
+          maximum: 1.0
+          default: 0.6
+          description: Target burstiness score (0.3-1.0)
+        strategy:
+          type: string
+          enum: [merge_and_split, add_connectors, vary_syntax, all]
+          default: all
+          description: Enhancement strategy to use
+
+    ImperfectionInjectionRequest:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          description: Input text to modify
+          minLength: 10
+          maxLength: 100000
+        level:
+          type: string
+          enum: [subtle, moderate, noticeable]
+          default: subtle
+          description: Imperfection level
+        preserve_academic_quality:
+          type: boolean
+          default: true
+          description: Whether to maintain academic standards
+
+    ReferenceAnalysisRequest:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          description: Text containing references
+          minLength: 50
+          maxLength: 100000
+        expected_style:
+          type: string
+          enum: [apa, mla, chicago, harvard, ieee]
+          description: Expected citation style
+
+    AIDetectionRequest:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          description: Text to test for AI detection
+          minLength: 100
+          maxLength: 100000
+        detectors:
+          type: array
+          items:
+            type: string
+            enum: [gptzero, originality, turnitin]
+          description: Which detectors to use
+
+    ValidationRequest:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          description: Text to validate
+          minLength: 50
+          maxLength: 100000
+        check_academic_standards:
+          type: boolean
+          default: true
+        check_readability:
+          type: boolean
+          default: true
+        check_structure:
+          type: boolean
+          default: true
+
+    PerplexityRequest:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          description: Text to analyze
+          minLength: 10
+          maxLength: 100000
+        model:
+          type: string
+          enum: [gpt2, gpt2-medium, gpt2-large]
+          default: gpt2
+          description: Language model to use
+
+    FullPipelineRequest:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          description: Input text for pipeline
+          minLength: 100
+          maxLength: 100000
+        config:
+          type: object
+          properties:
+            paraphrase:
+              type: boolean
+              default: false
+            fingerprint_removal:
+              type: object
+              properties:
+                aggressiveness:
+                  type: string
+                  enum: [conservative, moderate, aggressive]
+            burstiness_enhancement:
+              type: object
+              properties:
+                target_burstiness:
+                  type: number
+            imperfection_injection:
+              type: object
+              properties:
+                level:
+                  type: string
+                  enum: [subtle, moderate, noticeable]
+            run_validation:
+              type: boolean
+              default: true
+            run_detection:
+              type: boolean
+              default: true
+
+    # Response Schemas
+    FingerprintRemovalResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [success, error]
+        data:
+          type: object
+          properties:
+            cleaned_text:
+              type: string
+            fingerprints_removed:
+              type: array
+              items:
+                type: object
+            statistics:
+              type: object
+        metadata:
+          type: object
+          properties:
+            processing_time_ms:
+              type: integer
+            tool:
+              type: string
+            version:
+              type: string
+
+    BurstinessEnhancementResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: object
+          properties:
+            enhanced_text:
+              type: string
+            original_burstiness:
+              type: number
+            enhanced_burstiness:
+              type: number
+            transformations_applied:
+              type: array
+              items:
+                type: object
+        metadata:
+          type: object
+
+    ImperfectionInjectionResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: object
+          properties:
+            modified_text:
+              type: string
+            imperfections_added:
+              type: array
+              items:
+                type: object
+        metadata:
+          type: object
+
+    ReferenceAnalysisResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: object
+          properties:
+            citations_found:
+              type: array
+              items:
+                type: object
+            statistics:
+              type: object
+        metadata:
+          type: object
+
+    AIDetectionResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: object
+          properties:
+            overall_ai_score:
+              type: number
+            human_probability:
+              type: number
+            detector_results:
+              type: object
+        metadata:
+          type: object
+
+    ValidationResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: object
+          properties:
+            overall_score:
+              type: number
+            passed:
+              type: boolean
+            checks:
+              type: object
+        metadata:
+          type: object
+
+    PerplexityResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: object
+          properties:
+            overall_perplexity:
+              type: number
+            section_perplexities:
+              type: array
+            perplexity_distribution:
+              type: object
+        metadata:
+          type: object
+
+    FullPipelineResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: object
+          properties:
+            final_text:
+              type: string
+            pipeline_stages:
+              type: array
+              items:
+                type: object
+            validation_result:
+              type: object
+            detection_result:
+              type: object
+        metadata:
+          type: object
+
+    Error:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [error]
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+        metadata:
+          type: object
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            status: "error"
+            error:
+              code: "INVALID_INPUT"
+              message: "Text field is required and must be at least 10 characters"
+              details:
+                field: "text"
+                requirement: "minLength: 10"
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            status: "error"
+            error:
+              code: "INTERNAL_ERROR"
+              message: "An unexpected error occurred during processing"
+              details:
+                error_id: "550e8400-e29b-41d4-a716-446655440000"
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication (production only)
+
+security:
+  - ApiKeyAuth: []

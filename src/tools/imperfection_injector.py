@@ -168,49 +168,33 @@ class ImperfectionInjector:
             "structural_variations": 0
         }
 
-        # Distribute injections across types
-        injection_types = ["hesitation", "filler", "punctuation", "structure"]
-        type_counts = {t: target_injections // len(injection_types) for t in injection_types}
+        # Inject imperfections with retry mechanism
+        # Try each injection type multiple times until we reach target_injections
+        injection_methods = [
+            ("hesitation", self._inject_hesitation, "hesitations"),
+            ("filler", self._inject_filler, "fillers"),
+            ("punctuation", self._vary_punctuation, "punctuation_variations"),
+            ("structure", self._add_structural_variation, "structural_variations")
+        ]
 
-        # Add remainder to random types
-        remainder = target_injections % len(injection_types)
-        for _ in range(remainder):
-            random.choice(injection_types)
-            type_counts[random.choice(injection_types)] += 1
+        max_attempts = target_injections * 10  # Allow many attempts per target
+        attempts = 0
 
-        # 1. Inject hesitations
-        for _ in range(type_counts["hesitation"]):
-            injected_text, injection = self._inject_hesitation(
-                injected_text, section_type
-            )
+        while len(injections) < target_injections and attempts < max_attempts:
+            # Randomly select an injection method
+            method_name, method, stat_key = random.choice(injection_methods)
+
+            # Call the method
+            if method_name in ["hesitation", "filler", "structure"]:
+                injected_text, injection = method(injected_text, section_type)
+            else:  # punctuation doesn't need section_type
+                injected_text, injection = method(injected_text)
+
             if injection:
                 injections.append(injection)
-                stats["hesitations"] += 1
+                stats[stat_key] += 1
 
-        # 2. Inject fillers
-        for _ in range(type_counts["filler"]):
-            injected_text, injection = self._inject_filler(
-                injected_text, section_type
-            )
-            if injection:
-                injections.append(injection)
-                stats["fillers"] += 1
-
-        # 3. Vary punctuation
-        for _ in range(type_counts["punctuation"]):
-            injected_text, injection = self._vary_punctuation(injected_text)
-            if injection:
-                injections.append(injection)
-                stats["punctuation_variations"] += 1
-
-        # 4. Add structural variations
-        for _ in range(type_counts["structure"]):
-            injected_text, injection = self._add_structural_variation(
-                injected_text, section_type
-            )
-            if injection:
-                injections.append(injection)
-                stats["structural_variations"] += 1
+            attempts += 1
 
         stats["total_injections"] = len(injections)
 
@@ -383,7 +367,7 @@ def process_input(input_data: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         JSON output with imperfection-injected text and statistics
     """
-    start_time = time.time()
+    start_time = time.perf_counter()
 
     try:
         # Validate input
@@ -417,8 +401,8 @@ def process_input(input_data: Dict[str, Any]) -> Dict[str, Any]:
         # Process
         result = injector.inject_imperfections(text, section_type, intensity)
 
-        # Calculate processing time
-        processing_time_ms = int((time.time() - start_time) * 1000)
+        # Calculate processing time (ensure at least 1ms to avoid 0)
+        processing_time_ms = max(1, int((time.perf_counter() - start_time) * 1000))
 
         # Return success response
         return {

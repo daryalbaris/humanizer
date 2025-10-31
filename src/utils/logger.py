@@ -137,52 +137,62 @@ class HumanizerLogger:
         # Extract component name
         self.component = logger.name.split(".")[-1] if "." in logger.name else logger.name
 
-    def debug(self, message: str, data: Optional[Dict[str, Any]] = None) -> None:
+    def debug(self, message: str, data: Optional[Dict[str, Any]] = None, context: Optional[Dict[str, Any]] = None) -> None:
         """Log DEBUG level message with structured data.
 
         Args:
             message: Log message
-            data: Additional structured data (optional)
+            data: Additional structured data (optional) - alias for context
+            context: Additional structured data (optional) - alias for data
         """
-        self.logger.debug(message, extra={"data": data} if data else {})
+        log_data = context if context is not None else data
+        self.logger.debug(message, extra={"data": log_data} if log_data else {})
 
-    def info(self, message: str, data: Optional[Dict[str, Any]] = None) -> None:
+    def info(self, message: str, data: Optional[Dict[str, Any]] = None, context: Optional[Dict[str, Any]] = None) -> None:
         """Log INFO level message with structured data.
 
         Args:
             message: Log message
-            data: Additional structured data (optional)
+            data: Additional structured data (optional) - alias for context
+            context: Additional structured data (optional) - alias for data
         """
-        self.logger.info(message, extra={"data": data} if data else {})
+        log_data = context if context is not None else data
+        self.logger.info(message, extra={"data": log_data} if log_data else {})
 
-    def warning(self, message: str, data: Optional[Dict[str, Any]] = None) -> None:
+    def warning(self, message: str, data: Optional[Dict[str, Any]] = None, context: Optional[Dict[str, Any]] = None) -> None:
         """Log WARNING level message with structured data.
 
         Args:
             message: Log message
-            data: Additional structured data (optional)
+            data: Additional structured data (optional) - alias for context
+            context: Additional structured data (optional) - alias for data
         """
-        self.logger.warning(message, extra={"data": data} if data else {})
+        log_data = context if context is not None else data
+        self.logger.warning(message, extra={"data": log_data} if log_data else {})
 
-    def error(self, message: str, data: Optional[Dict[str, Any]] = None, exc_info: bool = False) -> None:
+    def error(self, message: str, data: Optional[Dict[str, Any]] = None, context: Optional[Dict[str, Any]] = None, exc_info: bool = False) -> None:
         """Log ERROR level message with structured data.
 
         Args:
             message: Log message
-            data: Additional structured data (optional)
+            data: Additional structured data (optional) - alias for context
+            context: Additional structured data (optional) - alias for data
             exc_info: Include exception traceback if True
         """
-        self.logger.error(message, extra={"data": data} if data else {}, exc_info=exc_info)
+        log_data = context if context is not None else data
+        self.logger.error(message, extra={"data": log_data} if log_data else {}, exc_info=exc_info)
 
-    def critical(self, message: str, data: Optional[Dict[str, Any]] = None, exc_info: bool = False) -> None:
+    def critical(self, message: str, data: Optional[Dict[str, Any]] = None, context: Optional[Dict[str, Any]] = None, exc_info: bool = False) -> None:
         """Log CRITICAL level message with structured data.
 
         Args:
             message: Log message
-            data: Additional structured data (optional)
+            data: Additional structured data (optional) - alias for context
+            context: Additional structured data (optional) - alias for data
             exc_info: Include exception traceback if True
         """
-        self.logger.critical(message, extra={"data": data} if data else {}, exc_info=exc_info)
+        log_data = context if context is not None else data
+        self.logger.critical(message, extra={"data": log_data} if log_data else {}, exc_info=exc_info)
 
     def exception(self, message: str, data: Optional[Dict[str, Any]] = None) -> None:
         """Log exception with full traceback at ERROR level.

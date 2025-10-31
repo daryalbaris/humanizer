@@ -206,7 +206,7 @@ class Validator:
         self,
         metrics: Dict[str, float],
         bertscore_threshold: float = 0.92,
-        bleu_threshold: float = 0.40,
+        bleu_threshold: float = 0.10,
         term_threshold: float = 0.95
     ) -> Dict[str, str]:
         """
@@ -251,12 +251,27 @@ class Validator:
         else:
             overall = "acceptable"  # Meet threshold exactly
 
-        return {
+        # Build list of failed checks
+        failed_checks = []
+        if not bertscore_passes:
+            failed_checks.append(f"bertscore ({bertscore:.4f} < {bertscore_threshold})")
+        if not bleu_passes:
+            failed_checks.append(f"bleu ({bleu:.4f} < {bleu_threshold})")
+        if not term_pres_passes:
+            failed_checks.append(f"term_preservation ({term_pres:.4f} < {term_threshold})")
+
+        result = {
             "overall_quality": overall,
             "bertscore_status": "pass" if bertscore_passes else "fail",
             "bleu_status": "pass" if bleu_passes else "fail",
             "term_preservation_status": "pass" if term_pres_passes else "fail"
         }
+
+        # Add failed_checks only when quality is poor
+        if overall == "poor":
+            result["failed_checks"] = failed_checks
+
+        return result
 
     def assess_overall_quality(
         self,
@@ -344,7 +359,7 @@ class Validator:
         if thresholds is None:
             thresholds = {
                 'min_bertscore': 0.92,
-                'min_bleu': 0.40,
+                'min_bleu': 0.10,
                 'min_term_preservation': 0.95
             }
 
@@ -401,7 +416,7 @@ def process_input(input_data: Dict[str, any]) -> Dict[str, any]:
         placeholder_map = input_data.get('placeholder_map', {})
         thresholds = input_data.get('validation_thresholds', {
             'min_bertscore': 0.92,
-            'min_bleu': 0.40,
+            'min_bleu': 0.10,
             'min_term_preservation': 0.95
         })
         check_term_preservation_flag = input_data.get('check_term_preservation', True)

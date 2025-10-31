@@ -12,7 +12,20 @@
       "Bash(python:*)",
       "Bash(git init:*)",
       "Bash(git config:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)",
+      "Bash(echo:*)",
+      "Bash(pip install:*)",
+      "Bash(dir:*)",
+      "Bash(pytest:*)",
+      "Bash(del Dockerfile docker-compose.yaml configprometheus.yml)",
+      "Bash(findstr:*)",
+      "Read(//c/**)",
+      "Bash(if not exist srcorchestrator mkdir srcorchestrator)",
+      "Bash(del test_paraphraser_direct.py)",
+      "Bash(if exist test_paraphraser_direct.py del test_paraphraser_direct.py)"
     ],
     "deny": [],
     "ask": []

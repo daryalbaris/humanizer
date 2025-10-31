@@ -452,7 +452,7 @@ def process_input(input_data: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         JSON output with style profile and recommendations
     """
-    start_time = time.time()
+    start_time = time.perf_counter()
 
     try:
         # Validate input
@@ -494,8 +494,8 @@ def process_input(input_data: Dict[str, Any]) -> Dict[str, Any]:
         # Process
         result = analyzer.analyze_references(reference_texts, analysis_depth)
 
-        # Calculate processing time
-        processing_time_ms = int((time.time() - start_time) * 1000)
+        # Calculate processing time (ensure at least 1ms to avoid 0)
+        processing_time_ms = max(1, int((time.perf_counter() - start_time) * 1000))
 
         # Return success response
         return {

@@ -160,9 +160,9 @@ class BurstinessEnhancer:
             section_type: Section type for context-aware enhancement
             dimensions: Which dimensions to apply (1-6)
             intensity: Enhancement intensity
-                - subtle: Minimal changes (10-15% of sentences)
-                - moderate: Balanced changes (25-35% of sentences) [default]
-                - strong: Aggressive changes (40-50% of sentences)
+                - subtle: Minimal changes (8% of sentences)
+                - moderate: Balanced changes (30% of sentences) [default]
+                - strong: Aggressive changes (45% of sentences)
 
         Returns:
             Dictionary with enhanced text and statistics
@@ -184,7 +184,10 @@ class BurstinessEnhancer:
                 "enhancements_applied": [],
                 "statistics": {
                     "original_sentence_count": len(sentences),
-                    "modified_sentence_count": len(sentences)
+                    "modified_sentence_count": len(sentences),
+                    "dimension_1_changes": 0,
+                    "dimension_2_changes": 0,
+                    "dimension_3_changes": 0
                 },
                 "burstiness_metrics": {
                     "original_variance": 0,
@@ -208,7 +211,7 @@ class BurstinessEnhancer:
 
         # Determine modification rate based on intensity
         modification_rate = {
-            "subtle": 0.15,      # 15% of sentences
+            "subtle": 0.08,      # 8% of sentences
             "moderate": 0.30,    # 30% of sentences
             "strong": 0.45       # 45% of sentences
         }.get(intensity, 0.30)
@@ -498,7 +501,7 @@ def process_input(input_data: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         JSON output with burstiness-enhanced text and statistics
     """
-    start_time = time.time()
+    start_time = time.perf_counter()
 
     try:
         # Validate input
@@ -553,8 +556,8 @@ def process_input(input_data: Dict[str, Any]) -> Dict[str, Any]:
         # Process
         result = enhancer.enhance_burstiness(text, section_type, dimensions, intensity)
 
-        # Calculate processing time
-        processing_time_ms = int((time.time() - start_time) * 1000)
+        # Calculate processing time (ensure at least 1ms to avoid 0)
+        processing_time_ms = max(1, int((time.perf_counter() - start_time) * 1000))
 
         # Return success response
         return {

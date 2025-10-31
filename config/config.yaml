@@ -82,6 +82,100 @@ components:
     # Minimum acceptable BLEU score (0-1)
     min_bleu_score: 0.70
 
+# Tool-specific configuration for CLI tools
+tool_configs:
+  term_protector:
+    # Default glossary path
+    default_glossary_path: "data/glossary.json"
+    # Enable performance caching for repeated terms
+    performance_cache_enabled: true
+    # Placeholder format template
+    placeholder_prefix: "__TERM_"
+    placeholder_suffix: "__"
+
+  paraphraser_processor:
+    # Default aggression level (1=gentle, 2=moderate, 3=aggressive)
+    default_aggression_level: 2
+    # Maximum tokens per API request
+    max_tokens_per_request: 4000
+    # Enable context-aware paraphrasing
+    context_aware: true
+    # Preserve sentence structure where possible
+    preserve_structure: true
+
+  detector_processor:
+    # AI detection API endpoint (placeholder)
+    api_endpoint: "https://api.example.com/detect"
+    # Detection confidence threshold (0-1)
+    confidence_threshold: 0.85
+    # Enable batch processing for multiple texts
+    batch_enabled: false
+
+  perplexity_calculator:
+    # GPT-2 model variant: gpt2, gpt2-medium, gpt2-large, gpt2-xl
+    model_variant: "gpt2"
+    # Device: cpu, cuda, or auto
+    device: "cpu"
+    # Maximum sequence length for processing
+    max_length: 1024
+    # Enable gradient computation (usually false for inference)
+    requires_grad: false
+
+  fingerprint_remover:
+    # Minimum confidence for fingerprint detection (0-1)
+    detection_confidence: 0.75
+    # Aggressive removal mode (may alter meaning slightly)
+    aggressive_mode: false
+    # Patterns to detect and remove
+    pattern_categories:
+      - "hedging_phrases"
+      - "transition_markers"
+      - "structure_indicators"
+
+  validator:
+    # BERTScore thresholds
+    bertscore_threshold: 0.92
+    bertscore_precision_min: 0.90
+    bertscore_recall_min: 0.90
+    # BLEU score threshold (lowered for paraphrasing - 0.10 allows aggressive paraphrasing while preventing over-transformation)
+    bleu_threshold: 0.10
+    # Term preservation threshold
+    term_preservation_threshold: 0.95
+    # BERTScore model (override components.validator.bertscore_model)
+    bertscore_model: "microsoft/deberta-xlarge-mnli"
+    # Language for BERTScore
+    bertscore_lang: "en"
+
+  imperfection_injector:
+    # Enable minor typo injection (realistic human errors)
+    enable_typos: true
+    # Typo rate (errors per 1000 words)
+    typo_rate: 0.5
+    # Enable punctuation variations
+    enable_punctuation_variance: true
+    # Enable minor grammar imperfections
+    enable_grammar_variance: false
+
+  burstiness_enhancer:
+    # Target burstiness score (0-1, higher = more varied sentence lengths)
+    target_burstiness: 0.7
+    # Minimum sentence length variation percentage
+    min_variation_percent: 30
+    # Enable paragraph-level restructuring
+    enable_restructuring: true
+    # Preserve original meaning strictly
+    strict_preservation: true
+
+  reference_analyzer:
+    # Citation style: apa, mla, chicago, ieee, vancouver
+    citation_style: "apa"
+    # Enable citation format validation
+    validate_citations: true
+    # Enable reference completeness check
+    check_completeness: true
+    # Enable cross-reference verification
+    verify_cross_references: true
+
 # Checkpoint settings
 checkpoints:
   # Save checkpoint after each iteration

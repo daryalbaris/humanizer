@@ -1,9 +1,9 @@
 # AI Humanizer System (BMAD)
 ## Academic Paper Humanization with Claude Code Orchestration
 
-**Version:** 1.0
-**Status:** Phase 1 - Foundation Setup
-**Last Updated:** 2025-10-30
+**Version:** 1.1
+**Status:** Sprint 9 Complete - Adaptive Aggression Feature Added
+**Last Updated:** 2025-10-31
 
 ---
 
@@ -19,6 +19,7 @@ BMAD (Better Metalwork & Academic Documents) is an AI paper humanization system 
 - **Domain-Specific** - Metallurgy/materials science optimized
 - **Claude Code Native** - Built for Claude Code orchestration (no external API needed)
 - **Iterative Refinement** - 7-iteration feedback loop with early termination
+- **Adaptive Aggression** - AI-powered automatic aggression level selection based on text risk analysis (30-40% cost reduction)
 
 ### Architecture
 
@@ -140,6 +141,33 @@ echo '{"text": "The AISI 304 steel was tested.", "glossary_path": "data/glossary
     "processing_time_ms": 123
   }
 }
+
+# Test Adaptive Aggression (automatic level selection)
+echo '{"text": "This study aims to investigate the effects of climate change. It is important to note that the findings have significant implications."}' | python src/tools/adaptive_aggression.py
+
+# Expected output:
+{
+  "status": "success",
+  "risk_score": 54.1,
+  "recommended_level": 3,
+  "confidence": 0.577,
+  "justification": "Risk Score: 54.1/100 (Moderate Risk)\nRecommended Level: 3 (Aggressive)\nTop Risk Factors: Transition Word Patterns (1.00), Academic Phrase Frequency (1.00)",
+  "factors": {
+    "burstiness": 0.65,
+    "sentence_uniformity": 0.45,
+    "vocabulary_diversity": 0.38,
+    "opening_diversity": 0.42,
+    "transition_patterns": 1.00,
+    "academic_phrases": 1.00,
+    "passive_voice": 0.35,
+    "sentence_complexity": 0.28
+  },
+  "metadata": {
+    "word_count": 28,
+    "sentence_count": 2,
+    "analysis_time_ms": 145
+  }
+}
 ```
 
 ---
@@ -149,7 +177,7 @@ echo '{"text": "The AISI 304 steel was tested.", "glossary_path": "data/glossary
 ```
 bmad/
 ├── src/
-│   ├── tools/               # 8 Python worker tools
+│   ├── tools/               # 9 Python worker tools
 │   │   ├── term_protector.py         # Tier 1/2/3 term protection
 │   │   ├── paraphraser_processor.py  # Paraphrasing post-processing
 │   │   ├── fingerprint_remover.py    # AI pattern removal
@@ -157,6 +185,7 @@ bmad/
 │   │   ├── detector_processor.py     # Detection formatting
 │   │   ├── perplexity_calculator.py  # GPT-2 perplexity
 │   │   ├── validator.py              # BERTScore + BLEU
+│   │   ├── adaptive_aggression.py    # AI detection risk analysis & level selection
 │   │   └── state_manager.py          # Checkpoint management
 │   ├── utils/               # Shared utilities
 │   │   ├── json_io.py                # JSON stdin/stdout helpers
@@ -197,7 +226,7 @@ bmad/
 
 ## Components
 
-### Python Tools (8)
+### Python Tools (9)
 
 | Tool | Purpose | Input | Output | Time |
 |------|---------|-------|--------|------|
@@ -208,6 +237,7 @@ bmad/
 | `detector_processor.py` | Format for detection | Text | Formatted text | <1s |
 | `perplexity_calculator.py` | Calculate GPT-2 perplexity | Text | Perplexity score | <15s |
 | `validator.py` | Semantic similarity | Original + humanized | BERTScore, BLEU | <45s |
+| `adaptive_aggression.py` | AI risk analysis & level selection | Text | Risk score + recommended level | <0.2s |
 | `state_manager.py` | Checkpoint management | Action + data | Status | <1s |
 
 **Total Processing Time:** ~15-30 minutes for 8,000-word paper (7 iterations)
@@ -223,11 +253,25 @@ humanizer:
   early_termination_improvement: 0.02  # Stop if <2% improvement
 
 aggression_levels:
+  adaptive: auto # Automatic selection via AI risk analysis (recommended)
   gentle: 1      # Minor paraphrasing
   moderate: 2    # Balanced changes
   aggressive: 3  # Heavy paraphrasing
   intensive: 4   # Maximum paraphrasing
   nuclear: 5     # Nuclear option (translation chain)
+
+adaptive_aggression:
+  enabled: true                   # Enable automatic level selection
+  analysis_timeout_ms: 200        # Max analysis time
+  risk_factors:                   # 8 detection risk factors (weighted)
+    burstiness: 20               # Sentence length variance
+    sentence_uniformity: 15      # Structure patterns
+    vocabulary_diversity: 15     # Word variety
+    opening_diversity: 15        # Sentence starters
+    transition_patterns: 10      # Formal transitions
+    academic_phrases: 10         # Formulaic phrases
+    passive_voice: 10            # Passive constructions
+    sentence_complexity: 5       # Complexity balance
 
 translation_chain:
   enabled: true
@@ -311,6 +355,7 @@ mypy src/
 ### For Users
 
 - **[Quick Start Guide](docs/QUICK_START_GUIDE.md)** - 15-minute tutorial (research phase, archived)
+- **[Adaptive Aggression User Guide](docs/ADAPTIVE_AGGRESSION_USER_GUIDE.md)** - Complete guide to automatic level selection (Sprint 9)
 - **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions (Sprint 8)
 
 ### For Research

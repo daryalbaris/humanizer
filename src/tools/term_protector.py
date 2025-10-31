@@ -69,16 +69,18 @@ class TermProtector:
         protection_map (dict): Categorized list of protected items
     """
 
-    def __init__(self, glossary_path: str):
+    def __init__(self, glossary_path: Optional[str] = None):
         """Initialize term protector with glossary.
 
         Args:
-            glossary_path: Path to glossary JSON file
+            glossary_path: Path to glossary JSON file (default: data/glossary.json)
 
         Raises:
             FileNotFoundError: If glossary file not found
             ValidationError: If glossary format invalid
         """
+        if glossary_path is None:
+            glossary_path = "data/glossary.json"
         self.glossary_path = Path(glossary_path)
         self.glossary = self._load_glossary()
         self.nlp = None  # Lazy load spaCy model
@@ -592,7 +594,8 @@ def process_input(input_data: dict) -> dict:
         "data": {
             "protected_text": protected_text,
             "placeholders": placeholders,
-            "protection_map": protection_map
+            "protection_map": protection_map,
+            "term_map": protection_map  # Backward compatibility alias
         },
         "metadata": {
             "processing_time_ms": processing_time_ms,
